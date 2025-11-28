@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import ReferralCard from "@/components/ReferralCard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -39,6 +40,18 @@ const Dashboard = () => {
     order: number;
   }>>([]);
   const { data: userRole } = useUserRole();
+
+  // Scroll to referrals section if hash is present
+  useEffect(() => {
+    if (location.hash === "#referrals" && !loading) {
+      setTimeout(() => {
+        const element = document.getElementById("referrals-section");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    }
+  }, [location.hash, loading]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -287,18 +300,18 @@ const Dashboard = () => {
                 return null;
               })}
 
-            {/* Referral Section */}
-            <div className="space-y-6">
+            {/* Referral Section - Early Supporters */}
+            <div id="referrals-section" className="space-y-6 scroll-mt-24">
               <div className="section-header">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 flex items-center justify-center shadow-md">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center shadow-md animate-pulse">
                   <Gift className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="section-title">🎁 Refer Friends</h2>
-                  <p className="text-sm text-muted-foreground">Get free premium by inviting friends</p>
+                  <h2 className="section-title">🎁 Early Supporters Event</h2>
+                  <p className="text-sm text-muted-foreground">Refer friends & earn extra timetable slots!</p>
                 </div>
               </div>
-              <div className="max-w-md">
+              <div className="max-w-lg">
                 <ReferralCard />
               </div>
             </div>
