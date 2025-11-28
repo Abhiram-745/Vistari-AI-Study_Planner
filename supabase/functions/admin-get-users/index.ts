@@ -36,7 +36,8 @@ serve(async (req) => {
     }
 
     // Check if user is admin
-    if (user.email !== 'abhiramkakarla1@gmail.com') {
+    const ADMIN_EMAILS = ['abhiramkakarla1@gmail.com', 'dhrishiv.panjabi@gmail.com'];
+    if (!ADMIN_EMAILS.includes(user.email || '')) {
       return new Response(
         JSON.stringify({ error: 'Not authorized' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
