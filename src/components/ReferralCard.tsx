@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Share2, Gift, Users, Check, Sparkles, Calendar, RefreshCw } from "lucide-react";
+import { Copy, Share2, Gift, Users, Check, Sparkles, Calendar, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { triggerConfetti, triggerEmoji } from "@/utils/celebrations";
 import { motion } from "framer-motion";
@@ -24,6 +24,8 @@ const ReferralCard = ({ compact = false }: ReferralCardProps) => {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     fetchReferralData();
@@ -31,53 +33,86 @@ const ReferralCard = ({ compact = false }: ReferralCardProps) => {
 
   const fetchReferralData = async () => {
     try {
+      setError(null);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setError("Please sign in to view your referral code");
+        setLoading(false);
+        return;
+      }
 
       // Get or create referral code
-      let { data: codeData } = await supabase
+      let { data: codeData, error: fetchError } = await supabase
         .from("referral_codes")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      if (fetchError) {
+        console.error("Error fetching referral code:", fetchError);
+        throw new Error("Failed to fetch referral code");
+      }
+
       if (!codeData) {
         // Generate new code
-        const { data: newCode } = await supabase.rpc("generate_referral_code");
+        const { data: newCode, error: genError } = await supabase.rpc("generate_referral_code");
         
-        const { data: insertedCode } = await supabase
+        if (genError) {
+          console.error("Error generating code:", genError);
+          throw new Error("Failed to generate referral code");
+        }
+        
+        const { data: insertedCode, error: insertError } = await supabase
           .from("referral_codes")
           .insert({ user_id: user.id, code: newCode })
           .select()
           .single();
         
+        if (insertError) {
+          console.error("Error inserting code:", insertError);
+          throw new Error("Failed to save referral code");
+        }
+        
         codeData = insertedCode;
       }
 
       // Get valid referral count
-      const { data: referralsData } = await supabase
+      const { data: referralsData, error: refError } = await supabase
         .from("referral_uses")
         .select("id")
         .eq("referral_code_id", codeData?.id)
         .eq("is_valid", true);
 
-      // Get rewards count
-      const { data: rewardsCount } = await supabase
-        .from("premium_grants")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("grant_type", "referral_reward");
+      if (refError) {
+        console.error("Error fetching referrals:", refError);
+      }
+
+      // Get rewards count using RPC
+      const { data: rewardsCount, error: rewardsError } = await supabase
+        .rpc("get_referral_rewards_count", { _user_id: user.id });
+
+      if (rewardsError) {
+        console.error("Error fetching rewards:", rewardsError);
+      }
 
       setReferralData({
         code: codeData?.code || "",
         validReferrals: referralsData?.length || 0,
-        rewardsEarned: rewardsCount?.length || 0,
+        rewardsEarned: rewardsCount || 0,
       });
-    } catch (error) {
-      console.error("Error fetching referral data:", error);
+    } catch (err) {
+      console.error("Error fetching referral data:", err);
+      setError(err instanceof Error ? err.message : "Failed to load referral data");
     } finally {
       setLoading(false);
+      setRetrying(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetrying(true);
+    setLoading(true);
+    fetchReferralData();
   };
 
   const copyCode = async () => {
@@ -123,6 +158,21 @@ const ReferralCard = ({ compact = false }: ReferralCardProps) => {
         </CardHeader>
         <CardContent>
           <div className="h-20 bg-muted rounded"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error && !compact) {
+    return (
+      <Card className="border-destructive/50">
+        <CardContent className="py-6 text-center">
+          <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={handleRetry} disabled={retrying} variant="outline" size="sm">
+            <RefreshCw className={`h-4 w-4 mr-2 ${retrying ? 'animate-spin' : ''}`} />
+            {retrying ? "Retrying..." : "Try Again"}
+          </Button>
         </CardContent>
       </Card>
     );

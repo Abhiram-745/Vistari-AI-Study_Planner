@@ -25,7 +25,7 @@ const Auth = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const [validatingEmail, setValidatingEmail] = useState(false);
 
-  const validateEmail = async (emailToValidate: string): Promise<{ isValid: boolean; reason: string }> => {
+  const validateEmail = async (emailToValidate: string): Promise<{ isValid: boolean; isBanned: boolean; reason: string }> => {
     try {
       const response = await supabase.functions.invoke("validate-email", {
         body: { email: emailToValidate },
@@ -33,13 +33,17 @@ const Auth = () => {
 
       if (response.error) {
         console.error("Email validation error:", response.error);
-        return { isValid: true, reason: "Validation skipped" };
+        return { isValid: true, isBanned: false, reason: "Validation skipped" };
       }
 
-      return response.data as { isValid: boolean; reason: string };
+      return {
+        isValid: response.data?.isValid ?? true,
+        isBanned: response.data?.isBanned ?? false,
+        reason: response.data?.reason ?? "Unknown",
+      };
     } catch (error) {
       console.error("Email validation error:", error);
-      return { isValid: true, reason: "Validation error" };
+      return { isValid: true, isBanned: false, reason: "Validation error" };
     }
   };
 
@@ -55,32 +59,46 @@ const Auth = () => {
         .maybeSingle();
 
       if (codeError || !codeData) {
-        console.log("Invalid referral code:", referralCode);
+        toast.error("Invalid referral code", {
+          description: "The referral code you entered doesn't exist.",
+        });
         return;
       }
 
       // Don't allow self-referral
       if (codeData.user_id === userId) {
-        console.log("Self-referral attempted");
+        toast.error("Invalid referral", {
+          description: "You cannot use your own referral code.",
+        });
         return;
       }
 
       // Record the referral
-      await supabase.from("referral_uses").insert({
+      const { error: insertError } = await supabase.from("referral_uses").insert({
         referral_code_id: codeData.id,
         referred_user_id: userId,
         is_valid: validation.isValid,
         validation_reason: validation.reason,
       });
 
-      // Check if referrer should get premium
+      if (insertError) {
+        console.error("Error inserting referral:", insertError);
+        return;
+      }
+
+      // Check if referrer should get a reward (only for valid emails)
       if (validation.isValid) {
         await supabase.rpc("check_and_grant_referral_premium", {
           _user_id: codeData.user_id,
         });
+        toast.success("Referral recorded!", {
+          description: "Your signup was recorded for your friend's referral rewards.",
+        });
+      } else {
+        toast.warning("Referral not eligible", {
+          description: validation.reason,
+        });
       }
-
-      console.log("Referral processed:", { userId, referralCode, isValid: validation.isValid });
     } catch (error) {
       console.error("Error processing referral:", error);
     }
@@ -91,16 +109,20 @@ const Auth = () => {
     setLoading(true);
     setValidatingEmail(true);
 
-    // Validate email first
+    // Step 1: Validate email and check if banned
     const validation = await validateEmail(email);
     setValidatingEmail(false);
 
-    if (!validation.isValid) {
+    // Block signup if email is banned
+    if (validation.isBanned) {
       setLoading(false);
-      toast.error(validation.reason || "This email address is not allowed. Please use a valid email.");
+      toast.error("Account creation blocked", {
+        description: validation.reason,
+      });
       return;
     }
 
+    // Step 2: Create the account (allow even for suspicious emails, just don't count referral)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -116,13 +138,23 @@ const Auth = () => {
       return;
     }
 
-    // Process referral if user was created
-    if (data.user) {
+    // Step 3: Process referral if user was created
+    if (data.user && referralCode.trim()) {
       await processReferral(data.user.id, email, validation);
     }
 
     setLoading(false);
-    toast.success("Account created! You can now log in.");
+    
+    if (validation.isValid || !referralCode.trim()) {
+      toast.success("Account created!", {
+        description: "You can now log in.",
+      });
+    } else {
+      toast.success("Account created!", {
+        description: "However, your email isn't eligible for referral rewards.",
+      });
+    }
+    
     setEmail("");
     setPassword("");
     setFullName("");
@@ -144,18 +176,20 @@ const Auth = () => {
       return;
     }
 
-    // Check if user is banned
+    // Check if user is banned (by user_id OR email)
     if (data.user) {
       const { data: bannedData } = await supabase
         .from("banned_users")
-        .select("id")
-        .eq("user_id", data.user.id)
+        .select("id, reason")
+        .or(`user_id.eq.${data.user.id},email.eq.${email.toLowerCase()}`)
         .maybeSingle();
 
       if (bannedData) {
         await supabase.auth.signOut();
         setLoading(false);
-        toast.error("Your account has been banned by an administrator. Please contact support.");
+        toast.error("Your account has been banned", {
+          description: bannedData.reason || "Please contact support if you believe this is an error.",
+        });
         return;
       }
     }
@@ -177,7 +211,9 @@ const Auth = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Password reset email sent! Check your inbox.");
+      toast.success("Password reset email sent!", {
+        description: "Check your inbox.",
+      });
       setResetEmail("");
       setResetDialogOpen(false);
     }

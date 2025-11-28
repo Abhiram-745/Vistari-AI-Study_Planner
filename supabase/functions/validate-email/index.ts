@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,7 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
+    const { email, checkBan } = await req.json();
     
     if (!email) {
       return new Response(
@@ -55,13 +56,58 @@ serve(async (req) => {
     const flags: string[] = [];
     let confidence = 100;
 
+    // Initialize Supabase client to check banned users
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if email is banned
+    const { data: bannedUser, error: banError } = await supabase
+      .from("banned_users")
+      .select("id, reason")
+      .eq("email", emailLower)
+      .maybeSingle();
+
+    if (banError) {
+      console.error("[validate-email] Error checking banned users:", banError);
+    }
+
+    if (bannedUser) {
+      console.log(`[validate-email] Banned email detected: ${emailLower}`);
+      return new Response(
+        JSON.stringify({
+          isValid: false,
+          isBanned: true,
+          reason: "This email has been banned. Please contact support if you believe this is an error.",
+          confidence: 100,
+          flags: ["banned_email"]
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // If only checking ban status, return early
+    if (checkBan) {
+      return new Response(
+        JSON.stringify({
+          isValid: true,
+          isBanned: false,
+          reason: "Email is not banned",
+          confidence: 100,
+          flags: []
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Check disposable domain
     if (DISPOSABLE_DOMAINS.includes(domain)) {
       console.log(`[validate-email] Disposable domain detected: ${domain}`);
       return new Response(
         JSON.stringify({
           isValid: false,
-          reason: "Disposable email addresses are not allowed",
+          isBanned: false,
+          reason: "This email isn't eligible for referral rewards. Disposable email addresses are not allowed for referrals.",
           confidence: 100,
           flags: ["disposable_domain"]
         }),
@@ -154,7 +200,10 @@ Respond with JSON only: {"isFake": boolean, "reason": "brief explanation"}`
     return new Response(
       JSON.stringify({
         isValid,
-        reason: isValid ? "Email appears legitimate" : "Email appears suspicious or fake",
+        isBanned: false,
+        reason: isValid 
+          ? "Email appears legitimate" 
+          : "This email isn't eligible for referral rewards. The email appears suspicious or temporary.",
         confidence,
         flags
       }),
@@ -163,7 +212,7 @@ Respond with JSON only: {"isFake": boolean, "reason": "brief explanation"}`
   } catch (error) {
     console.error("[validate-email] Error:", error);
     return new Response(
-      JSON.stringify({ isValid: true, reason: "Validation error, allowing email", confidence: 50, flags: ["error"] }),
+      JSON.stringify({ isValid: true, isBanned: false, reason: "Validation error, allowing email", confidence: 50, flags: ["error"] }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
