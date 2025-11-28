@@ -12,7 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { text, subjectName, images } = await req.json();
+    const { text, subjectName, images, apiKey } = await req.json();
+
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
 
     // Note: Gemma 3n is a text-only model - images are not supported
     if (images && Array.isArray(images) && images.length > 0 && !text) {
@@ -58,19 +62,14 @@ Return ONLY valid JSON in this format:
   ]
 }`;
 
-    const OPEN_ROUTER_API_KEY = Deno.env.get('OPEN_ROUTER_API_KEY');
-    if (!OPEN_ROUTER_API_KEY) {
-      throw new Error("OPEN_ROUTER_API_KEY not configured");
-    }
-
     const response = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',
       {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-          "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://vistari.app"
         },
         body: JSON.stringify({
           model: "google/gemma-3n-e4b-it:free",
