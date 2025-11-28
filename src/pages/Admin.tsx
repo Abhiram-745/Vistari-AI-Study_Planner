@@ -153,12 +153,14 @@ const Admin = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Store both user_id AND email to prevent ban bypass via new account creation
       const { error } = await supabase
         .from("banned_users")
         .insert({ 
           user_id: banTargetUser.id, 
           banned_by: user.id,
-          reason: banReason.trim() || null
+          reason: banReason.trim() || null,
+          email: banTargetUser.email.toLowerCase() // Store email to prevent re-registration
         });
 
       if (error) throw error;
