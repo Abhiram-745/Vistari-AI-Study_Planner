@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Loader2, TrendingUp, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { triggerConfetti } from "@/utils/celebrations";
 
 interface TestDate {
   id: string;
@@ -119,6 +120,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
       if (insertError) throw insertError;
 
       toast.success("Test score saved successfully!");
+      triggerConfetti('success');
       
       // Trigger AI analysis
       setAnalyzing(true);
@@ -191,7 +193,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="test-select">
             <Label htmlFor="test-select">Select Test *</Label>
             <Select value={selectedTestDateId} onValueChange={setSelectedTestDateId}>
               <SelectTrigger id="test-select">
@@ -211,7 +213,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2" data-tour="total-marks">
               <Label htmlFor="total-marks">Total Marks *</Label>
               <Input
                 id="total-marks"
@@ -222,7 +224,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
                 placeholder="e.g., 100"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" data-tour="marks-obtained">
               <Label htmlFor="marks-obtained">Marks Obtained *</Label>
               <Input
                 id="marks-obtained"
@@ -248,7 +250,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
             </Card>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="questions-correct">
             <Label htmlFor="correct" className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               Questions You Got Correct
@@ -266,7 +268,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="questions-wrong">
             <Label htmlFor="incorrect" className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-destructive" />
               Questions You Got Wrong
@@ -284,7 +286,7 @@ export const TestScoreEntry = ({ userId, onScoreAdded }: TestScoreEntryProps) =>
             </p>
           </div>
 
-          <Card className="bg-accent/5 border-accent/20">
+          <Card className="bg-accent/5 border-accent/20" data-tour="ai-analysis">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-accent" />

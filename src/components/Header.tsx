@@ -85,11 +85,13 @@ const Header = ({ onNewTimetable }: HeaderProps) => {
     };
   }, []);
 
+  const ADMIN_EMAILS = ['abhiramkakarla1@gmail.com', 'dhrishiv.panjabi@gmail.com'];
+
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       // Check if admin
-      setIsAdmin(user.email === "abhiramkakarla1@gmail.com");
+      setIsAdmin(ADMIN_EMAILS.includes(user.email || ''));
       
       const { data } = await supabase
         .from("profiles")

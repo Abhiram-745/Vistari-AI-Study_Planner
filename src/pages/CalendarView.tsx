@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,30 +12,9 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
-
-interface TimetableSession {
-  date: string;
-  sessions: {
-    subject: string;
-    topic: string;
-    duration: number;
-    startTime: string;
-    endTime: string;
-    type: string;
-    completed?: boolean;
-    sessionIndex: number;
-  }[];
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  is_recurring: boolean;
-  parent_event_id: string | null;
-}
+import { useSectionTour } from "@/hooks/useSectionTour";
+import SectionSpotlight from "@/components/tours/SectionSpotlight";
+import { calendarSectionSteps } from "@/components/tours/calendarSectionSteps";
 
 interface CalendarItem {
   id: string;
@@ -48,8 +27,30 @@ interface CalendarItem {
   data: any;
 }
 
-// Minimal draggable item - Notion Calendar style
-const DraggableItem = ({ item }: { item: CalendarItem }) => {
+// Time slots for the grid (6 AM to 10 PM)
+const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
+  const hour = i + 6;
+  return `${hour.toString().padStart(2, '0')}:00`;
+});
+
+const HOUR_HEIGHT = 60; // pixels per hour
+
+// Calculate position and height based on time
+const getTimePosition = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const totalMinutes = (hours - 6) * 60 + minutes;
+  return (totalMinutes / 60) * HOUR_HEIGHT;
+};
+
+const getSessionHeight = (startTime: string, endTime: string) => {
+  const [startHours, startMinutes] = startTime.split(':').map(Number);
+  const [endHours, endMinutes] = endTime.split(':').map(Number);
+  const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+  return Math.max((durationMinutes / 60) * HOUR_HEIGHT, 30);
+};
+
+// Draggable session item for time-based grid
+const DraggableSession = ({ item }: { item: CalendarItem }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item,
@@ -57,130 +58,82 @@ const DraggableItem = ({ item }: { item: CalendarItem }) => {
 
   const style = {
     transform: CSS.Translate.toString(transform),
+    top: `${getTimePosition(item.startTime)}px`,
+    height: `${getSessionHeight(item.startTime, item.endTime)}px`,
     opacity: isDragging ? 0.5 : 1,
   };
 
   const getItemStyles = () => {
     if (item.type === "event") {
-      return {
-        bg: "bg-red-500/90 dark:bg-red-600/90 hover:bg-red-600 dark:hover:bg-red-700",
-        text: "text-white",
-        icon: "⛔"
-      };
+      return { bg: "bg-red-500/90", text: "text-white", icon: "⛔" };
     }
-    
     const sessionType = item.data?.type;
-    
     if (sessionType === "homework") {
-      return {
-        bg: "bg-purple-500/90 dark:bg-purple-600/90 hover:bg-purple-600 dark:hover:bg-purple-700",
-        text: "text-white",
-        icon: "📝"
-      };
+      return { bg: "bg-purple-500/90", text: "text-white", icon: "📝" };
     } else if (sessionType === "revision") {
-      return {
-        bg: "bg-blue-500/90 dark:bg-blue-600/90 hover:bg-blue-600 dark:hover:bg-blue-700",
-        text: "text-white",
-        icon: "📚"
-      };
+      return { bg: "bg-blue-500/90", text: "text-white", icon: "📚" };
     } else if (sessionType === "break") {
-      return {
-        bg: "bg-muted/70 hover:bg-muted/90",
-        text: "text-muted-foreground",
-        icon: "☕"
-      };
+      return { bg: "bg-muted/70", text: "text-muted-foreground", icon: "☕" };
     } else if (item.data?.testDate) {
-      return {
-        bg: "bg-orange-500/90 dark:bg-orange-600/90 hover:bg-orange-600 dark:hover:bg-orange-700",
-        text: "text-white",
-        icon: "🎯"
-      };
+      return { bg: "bg-orange-500/90", text: "text-white", icon: "🎯" };
     }
-    
-    return {
-      bg: "bg-primary/80 dark:bg-primary/70 hover:bg-primary/90",
-      text: "text-primary-foreground",
-      icon: "📖"
-    };
+    return { bg: "bg-primary/80", text: "text-primary-foreground", icon: "📖" };
   };
 
   const styles = getItemStyles();
+  const height = getSessionHeight(item.startTime, item.endTime);
+  const isCompact = height < 50;
 
   return (
-    <HoverCard openDelay={200}>
+    <HoverCard openDelay={300}>
       <HoverCardTrigger asChild>
         <div
           ref={setNodeRef}
           style={style}
           {...listeners}
           {...attributes}
-          className={`mb-1.5 rounded-md cursor-move transition-all hover:shadow-md ${styles.bg} ${styles.text} px-2 py-1.5 flex items-center gap-1.5 min-h-[32px]`}
+          className={`absolute left-1 right-1 rounded-lg cursor-grab active:cursor-grabbing transition-all hover:shadow-lg hover:z-20 ${styles.bg} ${styles.text} px-2 py-1 overflow-hidden border border-white/20`}
         >
-          <span className="text-sm shrink-0">{styles.icon}</span>
-          <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-            <p className="text-xs font-medium leading-tight truncate">{item.title}</p>
-            <span className="text-[10px] font-medium opacity-80 shrink-0">{item.startTime}</span>
-          </div>
+          {isCompact ? (
+            <div className="flex items-center gap-1 h-full">
+              <span className="text-xs">{styles.icon}</span>
+              <p className="text-xs font-medium truncate flex-1">{item.title}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-1">
+                <span className="text-sm">{styles.icon}</span>
+                <p className="text-xs font-semibold truncate">{item.title}</p>
+              </div>
+              <p className="text-[10px] opacity-80 mt-0.5">{item.startTime} - {item.endTime}</p>
+            </div>
+          )}
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 p-4 bg-background/95 backdrop-blur-sm z-50" side="right" align="start">
+      <HoverCardContent className="w-72 p-4 bg-card/95 backdrop-blur-sm z-50" side="right" align="start">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">{styles.icon}</span>
             <div>
               <p className="text-sm font-bold text-foreground">{item.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {item.type === "event" 
-                  ? "Event" 
-                  : item.data?.type === "homework" 
-                  ? "Homework" 
-                  : item.data?.type === "revision" 
-                  ? "Revision"
-                  : item.data?.type === "break"
-                  ? "Break"
-                  : "Study Session"}
-              </p>
+              <p className="text-xs text-muted-foreground capitalize">{item.data?.type || item.type}</p>
             </div>
           </div>
-          
           <div className="space-y-2 pt-2 border-t">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{item.startTime} - {item.endTime}</span>
-              {item.data?.duration && (
-                <span className="text-xs text-muted-foreground">({item.data.duration} min)</span>
-              )}
+              <span className="text-sm">{item.startTime} - {item.endTime}</span>
             </div>
-            
             {item.data?.subject && (
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">{item.data.subject}</span>
               </div>
             )}
-            
-            {item.data?.topic && (
-              <p className="text-xs text-muted-foreground pl-6">{item.data.topic}</p>
-            )}
-            
             {item.data?.completed !== undefined && (
               <div className="flex items-center gap-2">
-                <CheckCircle2 className={`h-4 w-4 ${item.data.completed ? 'text-green-600' : 'text-muted-foreground'}`} />
-                <span className={`text-sm ${item.data.completed ? 'text-green-600 font-medium' : 'text-muted-foreground'}`}>
-                  {item.data.completed ? 'Completed' : 'Not completed'}
-                </span>
-              </div>
-            )}
-            
-            {item.data?.notes && (
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">{item.data.notes}</p>
-              </div>
-            )}
-            
-            {item.type === "event" && item.data?.description && (
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">{item.data.description}</p>
+                <CheckCircle2 className={`h-4 w-4 ${item.data.completed ? 'text-green-500' : 'text-muted-foreground'}`} />
+                <span className="text-sm">{item.data.completed ? 'Completed' : 'Not completed'}</span>
               </div>
             )}
           </div>
@@ -190,8 +143,8 @@ const DraggableItem = ({ item }: { item: CalendarItem }) => {
   );
 };
 
-// Droppable day column - Notion Calendar style
-const DroppableDay = ({ date, items, children }: { date: Date; items: CalendarItem[]; children?: React.ReactNode }) => {
+// Droppable day column for time grid
+const DroppableDay = ({ date, items }: { date: Date; items: CalendarItem[] }) => {
   const { isOver, setNodeRef } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
     data: { date },
@@ -203,38 +156,34 @@ const DroppableDay = ({ date, items, children }: { date: Date; items: CalendarIt
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-lg p-2 min-h-[280px] transition-all ${
-        isOver 
-          ? "bg-primary/10 border-2 border-primary shadow-lg" 
-          : isToday
-          ? "bg-primary/5 border-2 border-primary/30"
-          : "bg-card/50 border border-border/50"
+      className={`relative flex-1 min-w-[120px] border-r border-border/30 transition-colors ${
+        isOver ? "bg-primary/10" : isToday ? "bg-primary/5" : ""
       }`}
+      style={{ height: `${TIME_SLOTS.length * HOUR_HEIGHT}px` }}
     >
-      {/* Compact header */}
-      <div className="mb-2 pb-1.5 border-b flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-          {format(date, "EEE")}
-        </span>
-        <div className={`flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${
-          isToday 
-            ? "bg-primary text-primary-foreground" 
-            : "text-foreground"
-        }`}>
-          {format(date, "d")}
+      {/* Time slot lines */}
+      {TIME_SLOTS.map((_, i) => (
+        <div
+          key={i}
+          className="absolute left-0 right-0 border-t border-border/20"
+          style={{ top: `${i * HOUR_HEIGHT}px` }}
+        />
+      ))}
+      
+      {/* Sessions */}
+      {dayItems.map((item) => (
+        <DraggableSession key={item.id} item={item} />
+      ))}
+      
+      {/* Current time indicator */}
+      {isToday && (
+        <div
+          className="absolute left-0 right-0 h-0.5 bg-red-500 z-30"
+          style={{ top: `${getTimePosition(format(new Date(), 'HH:mm'))}px` }}
+        >
+          <div className="absolute -left-1.5 -top-1.5 w-3 h-3 rounded-full bg-red-500" />
         </div>
-      </div>
-      
-      {/* Items list */}
-      <div className="space-y-0.5">
-        {dayItems
-          .sort((a, b) => a.startTime.localeCompare(b.startTime))
-          .map((item) => (
-            <DraggableItem key={item.id} item={item} />
-          ))}
-      </div>
-      
-      {children}
+      )}
     </div>
   );
 };
@@ -247,6 +196,7 @@ const CalendarView = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [timetables, setTimetables] = useState<any[]>([]);
   const [selectedTimetableId, setSelectedTimetableId] = useState<string>("");
+  const { activeTourSection, markSectionViewed, viewedSections, handleSectionClick } = useSectionTour("calendar");
 
   useEffect(() => {
     fetchTimetables();
@@ -257,6 +207,13 @@ const CalendarView = () => {
       fetchCalendarData();
     }
   }, [currentWeek, selectedTimetableId]);
+
+  // Auto-trigger tour for first-time visitors
+  useEffect(() => {
+    if (!loading && timetables.length > 0 && !viewedSections.has("time-grid")) {
+      setTimeout(() => handleSectionClick("time-grid"), 500);
+    }
+  }, [loading, timetables.length, viewedSections]);
 
   const fetchTimetables = async () => {
     try {
@@ -307,7 +264,7 @@ const CalendarView = () => {
 
       if (eventsError) throw eventsError;
 
-      const eventItems: CalendarItem[] = (eventsData || []).map((event: Event) => ({
+      const eventItems: CalendarItem[] = (eventsData || []).map((event: any) => ({
         id: `event-${event.id}`,
         type: "event" as const,
         title: event.title,
@@ -329,7 +286,7 @@ const CalendarView = () => {
 
       const sessionItems: CalendarItem[] = [];
       if (timetableData?.schedule) {
-        const schedule = timetableData.schedule as Record<string, TimetableSession["sessions"]>;
+        const schedule = timetableData.schedule as Record<string, any[]>;
         
         Object.entries(schedule).forEach(([date, sessions]) => {
           const sessionDate = parseISO(date);
@@ -558,7 +515,7 @@ const CalendarView = () => {
           </div>
           
           <DragOverlay>
-            {activeItem ? <DraggableItem item={activeItem} /> : null}
+            {activeItem ? <DraggableSession item={activeItem} /> : null}
           </DragOverlay>
         </DndContext>
 

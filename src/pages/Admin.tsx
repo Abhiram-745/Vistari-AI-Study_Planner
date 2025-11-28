@@ -53,7 +53,8 @@ const Admin = () => {
       }
 
       // Check if user is admin
-      if (user.email !== "abhiramkakarla1@gmail.com") {
+      const ADMIN_EMAILS = ['abhiramkakarla1@gmail.com', 'dhrishiv.panjabi@gmail.com'];
+      if (!ADMIN_EMAILS.includes(user.email || '')) {
         toast.error("You don't have access to this page");
         navigate("/dashboard");
         return;
@@ -378,7 +379,7 @@ const Admin = () => {
                     <p className="text-sm text-muted-foreground">{user.email || user.id}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {user.email === "abhiramkakarla1@gmail.com" ? (
+                    {['abhiramkakarla1@gmail.com', 'dhrishiv.panjabi@gmail.com'].includes(user.email) ? (
                       <Badge className="bg-gradient-hero">Admin</Badge>
                     ) : (
                       <>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -6,13 +6,17 @@ import Header from "@/components/Header";
 import { TestScoreEntry } from "@/components/TestScoreEntry";
 import { TestScoresList } from "@/components/TestScoresList";
 import { supabase } from "@/integrations/supabase/client";
+import { useSectionTour } from "@/hooks/useSectionTour";
+import SectionSpotlight from "@/components/tours/SectionSpotlight";
+import { testScoresPageSteps } from "@/components/tours/testScoresSectionSteps";
 
 const TestScores = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [refresh, setRefresh] = useState(0);
+  const { activeTourSection, markSectionViewed, handleSectionClick, viewedSections } = useSectionTour("test-scores");
 
-  useState(() => {
+  useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -20,10 +24,24 @@ const TestScores = () => {
       }
     };
     fetchUser();
-  });
+  }, []);
+
+  // Auto-trigger spotlight for first-time visitors
+  useEffect(() => {
+    if (userId && !viewedSections.has("add-score")) {
+      handleSectionClick("add-score");
+    }
+  }, [userId, viewedSections]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Spotlight Tour */}
+      <SectionSpotlight
+        sectionKey={activeTourSection}
+        onComplete={markSectionViewed}
+        sectionSteps={testScoresPageSteps}
+      />
+
       {/* Floating background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="floating-blob top-20 -left-32 w-96 h-96 bg-primary/10 animate-float"></div>
@@ -49,10 +67,14 @@ const TestScores = () => {
               Track your test results and get AI-powered insights to improve your performance
             </p>
           </div>
-          {userId && <TestScoreEntry userId={userId} onScoreAdded={() => setRefresh(r => r + 1)} />}
+          <div data-tour="add-test-score">
+            {userId && <TestScoreEntry userId={userId} onScoreAdded={() => setRefresh(r => r + 1)} />}
+          </div>
         </div>
 
-        {userId && <TestScoresList userId={userId} refresh={refresh} />}
+        <div data-tour="scores-list">
+          {userId && <TestScoresList userId={userId} refresh={refresh} />}
+        </div>
       </div>
     </div>
   );
