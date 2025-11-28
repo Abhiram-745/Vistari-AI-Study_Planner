@@ -7,6 +7,7 @@ import { HomeworkList } from "@/components/HomeworkList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
+import PageTransition from "@/components/PageTransition";
 
 const Homework = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Homework = () => {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Guided Onboarding Tour */}
       <GuidedOnboarding />
@@ -58,6 +60,7 @@ const Homework = () => {
         {userId && <HomeworkList userId={userId} />}
       </div>
     </div>
+    </PageTransition>
   );
 };
 

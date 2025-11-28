@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { StudyInsightsPanel } from "@/components/StudyInsightsPanel";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageTransition from "@/components/PageTransition";
 
 const AIInsights = () => {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ const AIInsights = () => {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Floating background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -85,6 +87,7 @@ const AIInsights = () => {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 };
 

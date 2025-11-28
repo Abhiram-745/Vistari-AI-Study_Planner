@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
 import vistariLogo from "@/assets/vistari-logo.png";
+import PageTransition from "@/components/PageTransition";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -101,6 +102,7 @@ const Auth = () => {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4">
       <div className="absolute top-4 left-4">
         <Button
@@ -261,6 +263,7 @@ const Auth = () => {
         </CardContent>
       </Card>
     </div>
+    </PageTransition>
   );
 };
 

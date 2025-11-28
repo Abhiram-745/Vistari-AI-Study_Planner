@@ -30,6 +30,7 @@ import { StudyInsightsPanel } from "@/components/StudyInsightsPanel";
 import { ShareTimetableDialog } from "@/components/ShareTimetableDialog";
 import { DailyInsightsPanel } from "@/components/DailyInsightsPanel";
 import { TimetableHistoryDialog } from "@/components/TimetableHistoryDialog";
+import PageTransition from "@/components/PageTransition";
 
 interface TimetableSession {
   time: string;
@@ -337,6 +338,7 @@ const TimetableView = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Floating background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -717,6 +719,7 @@ const TimetableView = () => {
         />
       )}
     </div>
+    </PageTransition>
   );
 };
 

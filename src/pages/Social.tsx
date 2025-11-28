@@ -10,6 +10,7 @@ import Leaderboard from "@/components/social/Leaderboard";
 import { GroupLeaderboard } from "@/components/social/GroupLeaderboard";
 import SocialStats from "@/components/social/SocialStats";
 import { GroupInvitations } from "@/components/groups/GroupInvitations";
+import PageTransition from "@/components/PageTransition";
 
 const Social = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const Social = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Floating background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -102,6 +104,7 @@ const Social = () => {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 };
 
