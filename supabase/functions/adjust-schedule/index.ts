@@ -34,7 +34,11 @@ serve(async (req) => {
       });
     }
 
-    const { timetableId, currentDate, reflection, completedSessionIndices, incompleteSessions } = await req.json();
+    const { timetableId, currentDate, reflection, completedSessionIndices, incompleteSessions, apiKey } = await req.json();
+
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
 
     console.log('Adjust schedule request:', {
       timetableId,

@@ -41,7 +41,11 @@ serve(async (req) => {
   }
 
   try {
-    const { email, checkBan } = await req.json();
+    const { email, checkBan, apiKey } = await req.json();
+
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
     
     if (!email) {
       return new Response(

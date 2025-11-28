@@ -44,8 +44,13 @@ serve(async (req) => {
       incompleteSessions,
       difficultTopics,
       startTime,
-      endTime
+      endTime,
+      apiKey
     } = await req.json();
+
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
 
     // Validate required fields
     if (!timetableId) {

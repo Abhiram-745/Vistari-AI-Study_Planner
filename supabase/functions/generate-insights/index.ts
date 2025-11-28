@@ -35,7 +35,11 @@ serve(async (req) => {
       });
     }
 
-    const { timetableId } = await req.json();
+    const { timetableId, apiKey } = await req.json();
+
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
 
     // Fetch all reflections for this timetable
     const { data: reflections, error: reflectionsError } = await supabase
