@@ -9,6 +9,7 @@ import aiTopicParse from "@/assets/ai-topic-parse.png";
 import topicPriorityOrder from "@/assets/topic-priority-order.png";
 import topicDetailsCard from "@/assets/topic-details-card.png";
 import { supabase } from "@/integrations/supabase/client";
+import PageTransition from "@/components/PageTransition";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Landing = () => {
   } = useScroll();
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  return <div className="min-h-screen bg-background overflow-hidden">
+  return <PageTransition><div className="min-h-screen bg-background overflow-hidden">
       {/* Floating background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div animate={{
@@ -1707,7 +1708,7 @@ const Landing = () => {
           </div>
         </div>
       </footer>
-    </div>;
+    </div></PageTransition>;
 };
 const StoryCard = ({
   item,

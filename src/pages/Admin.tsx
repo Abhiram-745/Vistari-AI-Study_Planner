@@ -11,6 +11,7 @@ import { Users, Crown, Ban, Search, UserX, Eye, Calendar, BookOpen, Clock } from
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import PageTransition from "@/components/PageTransition";
 
 interface UserData {
   id: string;
@@ -281,6 +282,7 @@ const Admin = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -573,6 +575,7 @@ const Admin = () => {
         </Dialog>
       </main>
     </div>
+    </PageTransition>
   );
 };
 

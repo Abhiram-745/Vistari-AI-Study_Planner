@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import PageTransition from "@/components/PageTransition";
 
 interface Reflection {
   id: string;
@@ -91,7 +92,7 @@ const Reflections = () => {
   }
 
   return (
-    <>
+    <PageTransition>
       <Header />
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="mb-8">
@@ -226,7 +227,7 @@ const Reflections = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </>
+    </PageTransition>
   );
 };
 

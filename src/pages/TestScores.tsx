@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSectionTour } from "@/hooks/useSectionTour";
 import SectionSpotlight from "@/components/tours/SectionSpotlight";
 import { testScoresPageSteps } from "@/components/tours/testScoresSectionSteps";
+import PageTransition from "@/components/PageTransition";
 
 const TestScores = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const TestScores = () => {
   }, [userId, viewedSections]);
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Spotlight Tour */}
       <SectionSpotlight
@@ -77,6 +79,7 @@ const TestScores = () => {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };
 

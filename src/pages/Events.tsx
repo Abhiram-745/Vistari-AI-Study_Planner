@@ -5,11 +5,13 @@ import Header from "@/components/Header";
 import { EventsWidget } from "@/components/EventsWidget";
 import { SchoolSchedule } from "@/components/SchoolSchedule";
 import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
+import PageTransition from "@/components/PageTransition";
 
 const Events = () => {
   const navigate = useNavigate();
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Guided Onboarding Tour */}
       <GuidedOnboarding />
@@ -45,6 +47,7 @@ const Events = () => {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };
 

@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import TimetableList from "@/components/TimetableList";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
+import PageTransition from "@/components/PageTransition";
 
 const Timetables = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const Timetables = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Guided Onboarding Tour */}
       <GuidedOnboarding />
@@ -98,6 +100,7 @@ const Timetables = () => {
         />
       )}
     </div>
+    </PageTransition>
   );
 };
 

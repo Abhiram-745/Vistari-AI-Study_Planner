@@ -15,6 +15,7 @@ import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
 import { useSectionTour } from "@/hooks/useSectionTour";
 import SectionSpotlight from "@/components/tours/SectionSpotlight";
 import { calendarSectionSteps } from "@/components/tours/calendarSectionSteps";
+import PageTransition from "@/components/PageTransition";
 
 interface CalendarItem {
   id: string;
@@ -444,6 +445,7 @@ const CalendarView = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background">
       {/* Guided Onboarding Tour */}
       <GuidedOnboarding />
@@ -546,6 +548,7 @@ const CalendarView = () => {
         </Card>
       </div>
     </div>
+    </PageTransition>
   );
 };
 

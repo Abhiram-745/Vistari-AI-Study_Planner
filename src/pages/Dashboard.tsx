@@ -21,6 +21,7 @@ import { motion } from "framer-motion";
 import { useUserRole } from "@/hooks/useUserRole";
 import WelcomeModal from "@/components/WelcomeModal";
 import GuidedOnboarding from "@/components/tours/GuidedOnboarding";
+import PageTransition from "@/components/PageTransition";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -99,6 +100,7 @@ const Dashboard = () => {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Welcome Modal for first-time users */}
       <WelcomeModal />
@@ -535,6 +537,7 @@ const Dashboard = () => {
         )}
       </main>
     </div>
+    </PageTransition>
   );
 };
 
