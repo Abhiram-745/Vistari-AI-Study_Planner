@@ -151,20 +151,18 @@ serve(async (req) => {
               "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "google/gemma-3n-e4b-it:free",
               messages: [
                 {
-                  role: "system",
+                  role: "user",
                   content: `You are an email validation AI. Analyze if this email looks like a real person's email or a fake/temporary email created just for signing up. Consider:
 1. Does the local part look like a real name or random characters?
 2. Is the domain a well-known email provider or suspicious?
 3. Are there patterns suggesting automation or spam?
 
-Respond with JSON only: {"isFake": boolean, "reason": "brief explanation"}`
-                },
-                {
-                  role: "user",
-                  content: `Analyze this email: ${emailLower}`
+Respond with JSON only: {"isFake": boolean, "reason": "brief explanation"}
+
+Analyze this email: ${emailLower}`
                 }
               ],
             }),

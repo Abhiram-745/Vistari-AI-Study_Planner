@@ -11,48 +11,29 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
+    console.log('Logo generation requested - returning placeholder (image generation not available with free text model)');
 
-    console.log('Generating enhanced Vistari logo...');
+    const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0EA5E9"/>
+          <stop offset="100%" style="stop-color:#84CC16"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+      <text x="256" y="300" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="white" text-anchor="middle">V</text>
+      <rect x="180" y="130" width="152" height="20" rx="4" fill="white" opacity="0.9"/>
+      <rect x="180" y="160" width="152" height="12" rx="3" fill="white" opacity="0.7"/>
+      <rect x="180" y="180" width="100" height="12" rx="3" fill="white" opacity="0.7"/>
+    </svg>`;
 
-    const OPEN_ROUTER_API_KEY = Deno.env.get('OPEN_ROUTER_API_KEY');
-    if (!OPEN_ROUTER_API_KEY) {
-      throw new Error("OPEN_ROUTER_API_KEY not configured");
-    }
+    const svgBase64 = btoa(placeholderSvg);
+    const imageUrl = `data:image/svg+xml;base64,${svgBase64}`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': Deno.env.get('SUPABASE_URL') || "https://vistari.app"
-      },
-      body: JSON.stringify({
-        model: 'openai/dall-e-3',
-        prompt: 'Create a premium, modern app icon for "Vistari" - a student revision planning app. The design should feature: a stylized calendar icon integrated with the letter "V", vibrant cyan-to-lime gradient background (from #0EA5E9 to #84CC16), smooth rounded square shape with subtle depth, clean white icon design, professional and trustworthy aesthetic, suitable for app icons. Make it sharp, high-quality, with soft shadows for depth. Size: 512x512px, ultra high resolution.',
-        size: '1024x1024',
-        quality: 'hd',
-        n: 1,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Logo generated successfully');
-
-    const imageUrl = data.data?.[0]?.url;
-    
-    if (!imageUrl) {
-      throw new Error('No image returned from AI');
-    }
-
-    return new Response(JSON.stringify({ imageUrl }), {
+    return new Response(JSON.stringify({ 
+      imageUrl,
+      note: "Placeholder logo generated. Image AI generation requires a paid model like DALL-E 3."
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

@@ -83,10 +83,9 @@ Return ONLY valid JSON in this format:
           "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemma-3n-e4b-it:free",
           messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: contentParts }
+            { role: "user", content: `${systemPrompt}\n\n${contentParts}` }
           ],
         }),
       }

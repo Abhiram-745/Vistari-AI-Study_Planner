@@ -1069,10 +1069,9 @@ Make the schedule practical, achievable, and effective for GCSE exam preparation
             "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
           },
           body: JSON.stringify({
-            model: "openai/gpt-4o-mini",
+            model: "google/gemma-3n-e4b-it:free",
             messages: [
-              { role: "system", content: "You are an expert educational planner specializing in GCSE revision strategies. Return ONLY valid JSON with no markdown formatting, no code fences, no additional text. Your response must start with { and end with }. CRITICAL: Ensure the JSON is complete with all closing braces and brackets." },
-              { role: "user", content: prompt }
+              { role: "user", content: `INSTRUCTIONS: You are an expert educational planner specializing in GCSE revision strategies. Return ONLY valid JSON with no markdown formatting, no code fences, no additional text. Your response must start with { and end with }. CRITICAL: Ensure the JSON is complete with all closing braces and brackets.\n\nTASK:\n${prompt}` }
             ],
             max_tokens: 8192,
           }),
