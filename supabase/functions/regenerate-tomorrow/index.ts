@@ -44,13 +44,8 @@ serve(async (req) => {
       incompleteSessions,
       difficultTopics,
       startTime,
-      endTime,
-      apiKey
+      endTime
     } = await req.json();
-
-    if (!apiKey) {
-      throw new Error("API key is required");
-    }
 
     // Validate required fields
     if (!timetableId) {
@@ -387,7 +382,7 @@ Return ONLY valid JSON:
 
     const OPEN_ROUTER_API_KEY = Deno.env.get('OPEN_ROUTER_API_KEY');
     if (!OPEN_ROUTER_API_KEY) {
-      throw new Error("OPEN_ROUTER_API_KEY not configured");
+      throw new Error("OPEN_ROUTER_API_KEY not configured in Supabase secrets");
     }
 
     let openaiResult;
@@ -399,7 +394,7 @@ Return ONLY valid JSON:
           headers: { 
             "Content-Type": "application/json",
             "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-            "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
+            "HTTP-Referer": "https://vistari.app"
           },
           body: JSON.stringify({
             model: "google/gemma-3n-e4b-it:free",
