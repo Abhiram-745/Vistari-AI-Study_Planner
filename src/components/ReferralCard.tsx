@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Share2, Gift, Users, Clock, Check, Sparkles } from "lucide-react";
+import { Copy, Share2, Gift, Users, Check, Sparkles, Calendar, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { triggerConfetti, triggerEmoji } from "@/utils/celebrations";
 import { motion } from "framer-motion";
@@ -13,11 +13,14 @@ import { motion } from "framer-motion";
 interface ReferralData {
   code: string;
   validReferrals: number;
-  premiumActive: boolean;
-  premiumExpires?: string;
+  rewardsEarned: number;
 }
 
-const ReferralCard = () => {
+interface ReferralCardProps {
+  compact?: boolean;
+}
+
+const ReferralCard = ({ compact = false }: ReferralCardProps) => {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -58,20 +61,17 @@ const ReferralCard = () => {
         .eq("referral_code_id", codeData?.id)
         .eq("is_valid", true);
 
-      // Check active premium grant
-      const { data: premiumData } = await supabase
+      // Get rewards count
+      const { data: rewardsCount } = await supabase
         .from("premium_grants")
-        .select("*")
+        .select("id")
         .eq("user_id", user.id)
-        .gte("expires_at", new Date().toISOString())
-        .order("expires_at", { ascending: false })
-        .maybeSingle();
+        .eq("grant_type", "referral_reward");
 
       setReferralData({
         code: codeData?.code || "",
         validReferrals: referralsData?.length || 0,
-        premiumActive: !!premiumData,
-        premiumExpires: premiumData?.expires_at,
+        rewardsEarned: rewardsCount?.length || 0,
       });
     } catch (error) {
       console.error("Error fetching referral data:", error);
@@ -97,7 +97,7 @@ const ReferralCard = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join Vistari",
+          title: "Join Vistari - Early Supporters Event",
           text: shareText,
         });
       } catch (error) {
@@ -116,7 +116,7 @@ const ReferralCard = () => {
   };
 
   if (loading) {
-    return (
+    return compact ? null : (
       <Card className="animate-pulse">
         <CardHeader>
           <div className="h-6 bg-muted rounded w-1/2"></div>
@@ -128,8 +128,22 @@ const ReferralCard = () => {
     );
   }
 
-  const progress = Math.min((referralData?.validReferrals || 0) / 5 * 100, 100);
-  const referralsNeeded = Math.max(5 - (referralData?.validReferrals || 0), 0);
+  const currentProgress = (referralData?.validReferrals || 0) % 5;
+  const progressPercent = (currentProgress / 5) * 100;
+  const referralsToNextReward = 5 - currentProgress;
+  const nextRewardNumber = (referralData?.rewardsEarned || 0) + 1;
+
+  // Compact version for header
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20 cursor-pointer hover:from-orange-500/20 hover:to-amber-500/20 transition-all">
+        <Gift className="h-4 w-4 text-orange-500" />
+        <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
+          {referralData?.validReferrals || 0}/5
+        </span>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -138,30 +152,51 @@ const ReferralCard = () => {
       transition={{ duration: 0.4 }}
     >
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 p-1">
-          <CardHeader className="bg-card rounded-t-lg pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Refer Friends</CardTitle>
-              </div>
-              {referralData?.premiumActive && (
-                <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Premium Active
-                </Badge>
-              )}
-            </div>
-            <CardDescription>
-              {referralData?.premiumActive 
-                ? `Premium expires ${new Date(referralData.premiumExpires!).toLocaleDateString()}`
-                : "Invite 5 friends to get 7 days free premium!"
-              }
-            </CardDescription>
-          </CardHeader>
+        {/* Limited Time Banner */}
+        <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 p-2 text-center">
+          <div className="flex items-center justify-center gap-2 text-white text-sm font-semibold">
+            <Sparkles className="h-4 w-4 animate-pulse" />
+            <span>🎉 LIMITED TIME - Early Supporters Event!</span>
+            <Sparkles className="h-4 w-4 animate-pulse" />
+          </div>
         </div>
+
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Refer Friends & Earn Rewards</CardTitle>
+            </div>
+            {(referralData?.rewardsEarned || 0) > 0 && (
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                {referralData?.rewardsEarned} Rewards Earned!
+              </Badge>
+            )}
+          </div>
+          <CardDescription className="text-sm">
+            Every 5 friends you refer, you earn <strong>+1 Timetable Creation</strong> and <strong>+1 Timetable Regeneration</strong>!
+          </CardDescription>
+        </CardHeader>
         
-        <CardContent className="space-y-4 pt-4">
+        <CardContent className="space-y-4 pt-2">
+          {/* How it works */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+              <Calendar className="h-4 w-4 text-primary" />
+              <div className="text-xs">
+                <span className="font-semibold text-primary">+1 Creation</span>
+                <span className="text-muted-foreground"> per 5 refs</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/10 border border-secondary/20">
+              <RefreshCw className="h-4 w-4 text-secondary" />
+              <div className="text-xs">
+                <span className="font-semibold text-secondary">+1 Regen</span>
+                <span className="text-muted-foreground"> per 5 refs</span>
+              </div>
+            </div>
+          </div>
+
           {/* Referral Code */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Your Referral Code</label>
@@ -182,30 +217,35 @@ const ReferralCard = () => {
             </div>
           </div>
 
-          {/* Progress */}
+          {/* Progress to Next Reward */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                {referralData?.validReferrals || 0} / 5 friends joined
+                Progress to Reward #{nextRewardNumber}
               </span>
-              {referralsNeeded > 0 && (
-                <span className="text-muted-foreground">{referralsNeeded} more needed</span>
-              )}
+              <span className="text-muted-foreground font-medium">
+                {currentProgress}/5 friends
+              </span>
             </div>
-            <Progress value={progress} className="h-3" />
-            {progress >= 100 && !referralData?.premiumActive && (
-              <p className="text-sm text-green-600 font-medium animate-pulse">
-                🎉 You've earned 7 days premium! Check your account.
-              </p>
-            )}
+            <Progress value={progressPercent} className="h-3" />
+            <p className="text-xs text-muted-foreground">
+              {referralsToNextReward > 0 
+                ? `${referralsToNextReward} more friend${referralsToNextReward === 1 ? '' : 's'} to unlock your next reward!`
+                : "🎉 You've earned a reward!"
+              }
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Total referrals: <strong>{referralData?.validReferrals || 0}</strong> • 
+              Rewards earned: <strong>{referralData?.rewardsEarned || 0}</strong>
+            </p>
           </div>
 
           {/* Share Buttons */}
           <div className="flex gap-2">
             <Button 
               onClick={shareReferral}
-              className="flex-1 bg-gradient-primary"
+              className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share Link
@@ -220,16 +260,6 @@ const ReferralCard = () => {
               </svg>
             </Button>
           </div>
-
-          {/* Premium Info */}
-          {referralData?.premiumActive && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <Clock className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm">
-                Premium active until {new Date(referralData.premiumExpires!).toLocaleDateString()}
-              </span>
-            </div>
-          )}
         </CardContent>
       </Card>
     </motion.div>

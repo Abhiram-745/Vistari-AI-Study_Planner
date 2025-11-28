@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Plus, Home, LogOut, Settings, User, Sparkles, BookOpen, Users, Moon, Sun, ClipboardList, CalendarClock, TrendingUp, Menu, Brain, HelpCircle, Crown } from "lucide-react";
+import { Calendar, Plus, Home, LogOut, Settings, User, Sparkles, BookOpen, Users, Moon, Sun, ClipboardList, CalendarClock, TrendingUp, Menu, Brain, HelpCircle, Crown, Gift } from "lucide-react";
 import { toast } from "sonner";
 import ProfileSettings from "./ProfileSettings";
 import { useUserRole, useUsageLimits } from "@/hooks/useUserRole";
@@ -168,6 +168,22 @@ const Header = ({ onNewTimetable }: HeaderProps) => {
 
   const NavigationItems = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
+      {/* Early Supporters Banner - Mobile */}
+      <Button
+        variant="default"
+        size="sm"
+        onClick={() => {
+          navigate("/dashboard#referrals");
+          onItemClick?.();
+        }}
+        className="w-full justify-start gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white mb-2"
+      >
+        <Gift className="h-4 w-4" />
+        <span className="font-semibold">🎉 Early Supporters Event!</span>
+      </Button>
+
+      <Separator className="my-2" />
+
       <Button
         variant="ghost"
         size="sm"
@@ -488,6 +504,21 @@ const Header = ({ onNewTimetable }: HeaderProps) => {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-2">
+              {/* Early Supporters Referral Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/dashboard#referrals")}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20 hover:from-orange-500/20 hover:to-amber-500/20 transition-all group"
+                title="Early Supporters - Refer friends to earn rewards!"
+              >
+                <Gift className="h-4 w-4 text-orange-500 group-hover:animate-bounce" />
+                <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">Early Supporters</span>
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-orange-500/20 text-orange-600 border-none">
+                  Limited
+                </Badge>
+              </Button>
+
               {/* Tutorial Button */}
               <Button
                 variant="ghost"
