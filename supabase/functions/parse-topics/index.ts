@@ -98,7 +98,7 @@ Return ONLY valid JSON in this format:
           "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b:free",
+          model: "google/gemma-3n-e4b-it:free",
           messages: [
             { role: "user", content: messageContent }
           ],
