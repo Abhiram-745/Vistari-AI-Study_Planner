@@ -47,10 +47,11 @@ localPort = 36153
 externalPort = 3000
 
 [[ports]]
-localPort = 45269
-externalPort = 3001
+localPort = 42573
+externalPort = 3002
 
 [userenv]
 
 [userenv.shared]
 VITE_OPEN_ROUTER_API_KEY = "${OPEN_ROUTER_API_KEY}"
+BYTEZ_API_KEY = "840ecbd12ca7f2cfd93354ebb304535e"

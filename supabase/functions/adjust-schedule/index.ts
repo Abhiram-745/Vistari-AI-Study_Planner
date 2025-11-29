@@ -229,7 +229,7 @@ Return ONLY valid JSON:
           "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
         },
         body: JSON.stringify({
-          model: "grok-3-vision-120b",
+          model: "mistralai/mistral-7b-instruct:free",
           messages: [
             { role: "user", content: `${systemPrompt}\n\n${prompt}` }
           ],
