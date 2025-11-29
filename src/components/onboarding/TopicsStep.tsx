@@ -124,7 +124,8 @@ const TopicsStep = ({ subjects, topics, setTopics }: TopicsStepProps) => {
   const [tempDifficulties, setTempDifficulties] = useState("");
 
   const currentSubject = subjects[currentSubjectIndex];
-  const currentSubjectId = currentSubjectIndex.toString();
+  // Use actual subject ID if available, fall back to index for backward compatibility
+  const currentSubjectId = currentSubject?.id || currentSubjectIndex.toString();
 
   const addTopic = () => {
     if (topicName.trim()) {
@@ -264,6 +265,10 @@ const TopicsStep = ({ subjects, topics, setTopics }: TopicsStepProps) => {
   };
 
   const getSubjectName = (subjectId: string) => {
+    // Try to find by UUID first
+    const subjectByUUID = subjects.find(s => s.id === subjectId);
+    if (subjectByUUID) return subjectByUUID.name;
+    // Fall back to index-based lookup for old data
     const subject = subjects.find((s, i) => i.toString() === subjectId);
     return subject?.name || "";
   };
