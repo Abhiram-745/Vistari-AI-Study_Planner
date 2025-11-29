@@ -78,24 +78,21 @@ Do NOT include any explanation or commentary - ONLY the JSON.`;
       }
     }
 
-    const OPEN_ROUTER_API_KEY = Deno.env.get('OPEN_ROUTER_API_KEY');
-    if (!OPEN_ROUTER_API_KEY) {
-      throw new Error("OPEN_ROUTER_API_KEY not configured");
-    }
+    // Using Bytez API with Gemini 2.5 Flash for image extraction
+    const BYTEZ_API_KEY = "840ecbd12ca7f2cfd93354ebb304535e";
 
-    console.log(`Calling OpenRouter with ${messageContent.length} content parts (${images?.length || 0} images)`);
+    console.log(`Calling Bytez API with ${messageContent.length} content parts (${images?.length || 0} images)`);
 
     const response = await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
+      'https://api.bytez.com/models/v2/openai/v1/chat/completions',
       {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-          "HTTP-Referer": Deno.env.get('SUPABASE_URL') || "https://vistari.app"
+          "Authorization": BYTEZ_API_KEY
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-4-maverick:free",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "user", content: messageContent }
           ],
@@ -124,7 +121,7 @@ Do NOT include any explanation or commentary - ONLY the JSON.`;
     }
 
     const openaiResult = await response.json();
-    console.log('Gemini response:', JSON.stringify(openaiResult, null, 2));
+    console.log('Bytez Gemini response:', JSON.stringify(openaiResult, null, 2));
 
     // Extract content from response
     let responseText: string | undefined;

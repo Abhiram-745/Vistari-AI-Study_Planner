@@ -1098,24 +1098,21 @@ Make the schedule practical, achievable, and effective for GCSE exam preparation
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for large timetables
 
-    const OPEN_ROUTER_API_KEY = Deno.env.get('OPEN_ROUTER_API_KEY');
-    if (!OPEN_ROUTER_API_KEY) {
-      throw new Error("OPEN_ROUTER_API_KEY not configured");
-    }
+    // Using Bytez API with Gemini 2.5 Flash for timetable generation
+    const BYTEZ_API_KEY = "840ecbd12ca7f2cfd93354ebb304535e";
 
     let openaiResult;
     try {
       const response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
+        'https://api.bytez.com/models/v2/openai/v1/chat/completions',
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-            "HTTP-Referer": "https://vistari.app"
+            "Authorization": BYTEZ_API_KEY
           },
           body: JSON.stringify({
-            model: "x-ai/grok-4.1-fast:free",
+            model: "google/gemini-2.5-flash",
             messages: [
               { role: "user", content: `INSTRUCTIONS: You are an expert educational planner specializing in GCSE revision strategies. Return ONLY valid JSON with no markdown formatting, no code fences, no additional text. Your response must start with { and end with }. CRITICAL: Ensure the JSON is complete with all closing braces and brackets.\n\nTASK:\n${prompt}` }
             ],
@@ -1127,8 +1124,8 @@ Make the schedule practical, achievable, and effective for GCSE exam preparation
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("OpenAI API error:", response.status, errorText);
-        throw new Error(`OpenAI API request failed: ${response.status}`);
+        console.error("Bytez API error:", response.status, errorText);
+        throw new Error(`Bytez API request failed: ${response.status}`);
       }
 
       openaiResult = await response.json();
@@ -1142,7 +1139,7 @@ Make the schedule practical, achievable, and effective for GCSE exam preparation
       clearTimeout(timeoutId);
     }
 
-    console.log("OpenAI raw result:", JSON.stringify(openaiResult, null, 2));
+    console.log("Bytez Gemini raw result:", JSON.stringify(openaiResult, null, 2));
 
     // Extract content from OpenAI response
     let aiResponse: string | undefined;
