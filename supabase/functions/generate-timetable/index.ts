@@ -667,7 +667,33 @@ Sessions failing validation are REMOVED from the schedule!
 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 `;
 
-    const prompt = `You are an expert study planner for GCSE students. Create a personalized revision timetable with the following details:
+    const prompt = `You are generating a personalized revision timetable for a GCSE student.
+
+**CRITICAL PRINCIPLE: PERSONALIZATION NOT ASSUMPTIONS**
+
+Use ONLY the preferences and data from this student's timetable creation, including:
+✓ Days the student is available for study
+✓ Start and end times for when they want to study each day
+✓ Total study hours or target per day/week
+✓ Subjects, topics and exam dates
+✓ Topic difficulty / focus list / priority topics
+✓ Any days marked as rest or busy (events, homework, exams)
+
+**DO NOT assume every study session is 75 minutes.**
+
+Instead, customize the length and NUMBER of sessions per day based on:
+• User's preferred session length (from preferences)
+• Total available time that day (end time - start time - events)
+• Topic difficulty (harder topics = longer or more frequent blocks)
+• Upcoming deadlines and exam proximity
+• Focus list topics that should receive more time
+
+**MUST ENSURE:**
+✓ Timetable never schedules outside the user's chosen time window
+✓ Total scheduled study time per day does NOT exceed their available time
+✓ Focus/priority topics appear MORE OFTEN than non-priority topics
+✓ Sessions are in realistic blocks (25-90 minutes with reasonable gaps)
+✓ All output is clearly structured with date, start time, end time, subject, topic, and notes
 
 ${strictTimeWindowContext}
 
