@@ -440,12 +440,63 @@ const Header = ({ onNewTimetable }: HeaderProps) => {
               <Users className="h-4 w-4 mr-1.5" />
               Groups
             </Button>
+            
+            {/* These items show directly on xl+ screens */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/events")} 
+              className={`hidden xl:flex text-sm font-medium transition-all ${isActivePath("/events") ? "bg-primary/15 text-primary" : ""}`}
+            >
+              <CalendarClock className="h-4 w-4 mr-1.5" />
+              Events
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/test-scores")} 
+              className={`hidden xl:flex text-sm font-medium transition-all ${isActivePath("/test-scores") ? "bg-primary/15 text-primary" : ""}`}
+            >
+              <TrendingUp className="h-4 w-4 mr-1.5" />
+              Scores
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/social")} 
+              className={`hidden 2xl:flex text-sm font-medium transition-all ${isActivePath("/social") ? "bg-primary/15 text-primary" : ""}`}
+            >
+              <Users className="h-4 w-4 mr-1.5" />
+              Social
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/ai-insights")} 
+              className={`hidden 2xl:flex text-sm font-medium transition-all ${isActivePath("/ai-insights") ? "bg-primary/15 text-primary" : ""}`}
+            >
+              <Brain className="h-4 w-4 mr-1.5" />
+              AI Insights
+            </Button>
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")} 
+                className={`hidden 2xl:flex text-sm font-medium transition-all ${isActivePath("/admin") ? "bg-primary/15 text-primary" : ""}`}
+              >
+                <Crown className="h-4 w-4 mr-1.5 text-amber-500" />
+                Admin
+              </Button>
+            )}
+
+            {/* More dropdown - only shows on lg, hidden on 2xl+ */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-sm font-medium transition-all ${isMoreActive ? "bg-primary/15 text-primary" : ""}`}
+                  className={`2xl:hidden text-sm font-medium transition-all ${isMoreActive ? "bg-primary/15 text-primary" : ""}`}
                 >
                   More
                   <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,20 +505,22 @@ const Header = ({ onNewTimetable }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-popover border border-border shadow-lg z-50">
+                {/* Events and Scores show in dropdown only on lg (hidden on xl+) */}
                 <DropdownMenuItem 
                   onClick={() => navigate("/events")} 
-                  className={`cursor-pointer ${isActivePath("/events") ? "bg-primary/10 text-primary" : ""}`}
+                  className={`xl:hidden cursor-pointer ${isActivePath("/events") ? "bg-primary/10 text-primary" : ""}`}
                 >
                   <CalendarClock className="h-4 w-4 mr-2" />
                   Events
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate("/test-scores")} 
-                  className={`cursor-pointer ${isActivePath("/test-scores") ? "bg-primary/10 text-primary" : ""}`}
+                  className={`xl:hidden cursor-pointer ${isActivePath("/test-scores") ? "bg-primary/10 text-primary" : ""}`}
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Test Scores
                 </DropdownMenuItem>
+                {/* Social and AI show in dropdown on lg and xl (hidden on 2xl+) */}
                 <DropdownMenuItem 
                   onClick={() => navigate("/social")} 
                   className={`cursor-pointer ${isActivePath("/social") ? "bg-primary/10 text-primary" : ""}`}
